@@ -31,7 +31,7 @@ SECRET_KEY = 'django-insecure-#msu^1=o+nw4xr0u=ea1z1b#xsw%d2m%4hed15h!dh-i&gvs_a
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    "sleek-backend.azurewebsites.net",
+    "sleek-backend-dghhanbpeqcyfhhw.centralindia-01.azurewebsites.net",
     "localhost",
     "127.0.0.1",
 ]
