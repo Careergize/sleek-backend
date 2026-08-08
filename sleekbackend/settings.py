@@ -135,7 +135,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 CORS_ALLOW_ALL_ORIGINS = True
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://sleek-backend-3dps.onrender.com",
+    "https://sleek-backend-dghhanbpeqcyfhhw.centralindia-01.azurewebsites.net",
     "https://sleek-cars.com",
     "https://www.sleek-cars.com"
 ]
