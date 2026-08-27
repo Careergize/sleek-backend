@@ -33,6 +33,7 @@ DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = [
     "sleek-backend-3dps.onrender.com",
     "sleek-backend.azurewebsites.net",
+    "sleek-backend-dghhanbpeqcyfhhw.centralindia-01.azurewebsites.net",
     "localhost",
     "127.0.0.1",
 ]
@@ -147,6 +148,9 @@ CSRF_TRUSTED_ORIGINS = [
 # =========================
 STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
-FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://www.sleek-cars.com')
+FRONTEND_URL = os.environ.get(
+    'FRONTEND_URL',
+    'http://127.0.0.1:5173' if DEBUG else 'https://www.sleek-cars.com',
+)
 
 
