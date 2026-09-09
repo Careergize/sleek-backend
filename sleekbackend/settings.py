@@ -31,8 +31,6 @@ SECRET_KEY = 'django-insecure-#msu^1=o+nw4xr0u=ea1z1b#xsw%d2m%4hed15h!dh-i&gvs_a
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = [
-    "api.sleek-cars.com",
-    "sleek-cars.com",
     "localhost",
     "127.0.0.1",
 ]
@@ -140,7 +138,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 CORS_ALLOW_ALL_ORIGINS = True
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://sleek-backend-3dps.onrender.com",
     "https://sleek-cars.com",
     "https://www.sleek-cars.com"
 ]
@@ -151,6 +148,9 @@ CSRF_TRUSTED_ORIGINS = [
 # =========================
 STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
-FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://www.sleek-cars.com')
+FRONTEND_URL = os.environ.get(
+    'FRONTEND_URL',
+    'http://127.0.0.1:5173' if DEBUG else 'https://www.sleek-cars.com',
+)
 
 

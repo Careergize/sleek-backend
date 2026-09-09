@@ -15,11 +15,26 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path,include
+from django.http import JsonResponse
+from django.urls import include, path
 from django.conf import settings
 from django.conf.urls.static import static
 
+
+def api_root(request):
+    return JsonResponse({
+        'status': 'ok',
+        'message': 'Sleek Backend API is running',
+        'endpoints': {
+            'cars': '/api/cars/',
+            'bookings': '/api/bookings/',
+            'admin': '/admin/',
+        },
+    })
+
+
 urlpatterns = [
+    path('', api_root, name='api-root'),
     path('admin/', admin.site.urls),
     path('api/', include('rentals.urls')),
 ]
