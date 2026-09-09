@@ -31,7 +31,8 @@ SECRET_KEY = 'django-insecure-#msu^1=o+nw4xr0u=ea1z1b#xsw%d2m%4hed15h!dh-i&gvs_a
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = [
-    "sleek-backend-dghhanbpeqcyfhhw.centralindia-01.azurewebsites.net",
+    "api.sleek-cars.com",
+    "sleek-cars.com",
     "localhost",
     "127.0.0.1",
 ]
@@ -88,8 +89,12 @@ WSGI_APPLICATION = 'sleekbackend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
 
