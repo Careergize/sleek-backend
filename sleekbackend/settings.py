@@ -29,10 +29,10 @@ SECRET_KEY = 'django-insecure-#msu^1=o+nw4xr0u=ea1z1b#xsw%d2m%4hed15h!dh-i&gvs_a
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
-
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
+    "api.sleek-cars.com",
 ]
 
 
@@ -139,9 +139,13 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 CSRF_TRUSTED_ORIGINS = [
     "https://sleek-cars.com",
-    "https://www.sleek-cars.com"
+    "https://www.sleek-cars.com",
+    "https://api.sleek-cars.com",
 ]
-
+CORS_ALLOWED_ORIGINS = [
+    "https://sleek-cars.com",
+    "https://www.sleek-cars.com",
+]
 # =========================
 # Stripe
 # Set via env on Render: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, FRONTEND_URL
