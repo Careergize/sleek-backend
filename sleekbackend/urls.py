@@ -37,6 +37,7 @@ urlpatterns = [
     path('', api_root, name='api-root'),
     path('admin/', admin.site.urls),
     path('api/', include('rentals.urls')),
+    path('', include('authentication.urls')),  # Include authentication app URLs
 ]
 
 if settings.DEBUG:
