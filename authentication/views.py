@@ -35,8 +35,8 @@ class LoginAPIView(APIView):
 
 		authenticated_user = authenticate(
 			request,
-			username=user.get_username(),
 			password=password,
+			**{user_model.USERNAME_FIELD: user.get_username()},
 		)
 		if authenticated_user is None:
 			return Response(
