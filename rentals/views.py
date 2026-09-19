@@ -1,8 +1,9 @@
 import logging
-
+import pdfkit
 import stripe
 from django.conf import settings
 from django.http import HttpResponse
+from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -13,6 +14,18 @@ from .serializers import CarSerializer, BookingSerializer
 
 logger = logging.getLogger(__name__)
 stripe.api_key = settings.STRIPE_SECRET_KEY
+from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
+from xhtml2pdf import pisa
+
+
+class InvoiceAPIView(APIView):
+
+    def get(self, request):
+        return render(
+            request,
+            'rentals/Sleek_Rental_Agreement_Template.html',
+        )
 
 # ponytail: AED is a 2-decimal currency on Stripe -> amount in fils (AED 1.00 = 100).
 
@@ -454,3 +467,106 @@ def _handle_charge_refunded(charge):
         payment.save(update_fields=['status', 'refund_reason'])
         payment.booking.payment_status = 'refunded'
         payment.booking.save(update_fields=['payment_status'])
+
+
+
+from io import BytesIO
+from playwright.sync_api import sync_playwright
+from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+
+def html_to_pdf_bytes(html_content):
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.set_content(html_content, wait_until="networkidle")
+        pdf_bytes = page.pdf(format="A4", print_background=True)
+        browser.close()
+        return pdf_bytes
+
+class SendBookingEmailAPIView(APIView):
+
+    def post(self, request, pk):
+        try:
+            booking = Booking.objects.select_related('car').get(pk=pk)
+        except Booking.DoesNotExist:
+            return Response(
+                {"success": False, "message": "Booking not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if booking.status != "confirmed":
+            return Response(
+                {
+                    "success": False,
+                    "message": "Booking is not confirmed yet",
+                    "booking_status": booking.status
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            html_content = render_to_string(
+                'rentals/Sleek_Rental_Agreement_Template.html',
+                {'booking': booking}
+            )
+
+            # Generate PDF using Playwright
+            pdf_data = html_to_pdf_bytes(html_content)
+
+            subject = f"Rental Agreement - {booking.car.brand} {booking.car.name}"
+            body = f"""Dear {booking.name},
+
+Your booking has been confirmed. Please find your rental agreement attached.
+
+Booking Details:
+Vehicle: {booking.car.brand} {booking.car.name}
+Pickup Date: {booking.pickup_date}
+Pickup Time: {booking.pickup_time}
+Drop-off Date: {booking.dropoff_date}
+Drop-off Time: {booking.dropoff_time}
+Total Amount: AED {booking.total_price}
+
+Thank you for choosing Sleek Car Rental.
+
+Regards,
+Sleek Car Rental LLC"""
+
+            email = EmailMessage(
+                subject=subject,
+                body=body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[booking.email],
+            )
+
+            email.attach(
+                f"Rental_Agreement_{booking.id}.pdf",
+                pdf_data,
+                "application/pdf"
+            )
+
+            email.send(fail_silently=False)
+
+            return Response(
+                {
+                    "success": True,
+                    "message": "Booking confirmation email sent successfully",
+                    "booking_id": booking.id,
+                    "email": booking.email
+                },
+                status=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            logger.exception("Failed to send booking email: %s", e)
+            return Response(
+                {
+                    "success": False,
+                    "message": "Failed to send email",
+                    "error": str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

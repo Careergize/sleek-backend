@@ -1,0 +1,628 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&display=swap');
+
+    body {
+      font-family: 'Amiri', 'DejaVu Sans', Arial, sans-serif;
+    }
+
+    /* Target Arabic wrappers or classes */
+    .arabic, [dir="rtl"] {
+      direction: rtl;
+      text-align: right;
+      unicode-bidi: embed;
+      font-family: 'Amiri', serif;
+    }
+  </style>
+<meta charset="UTF-8">
+<title>Sleek Car Rental — Rental Agreement</title>
+<style>
+  :root{
+    --ink:#1a1a1a;
+    --line:#1a1a1a;
+    --olive:#000000;
+    --olive-dark:#000000;
+    --paper:#ffffff;
+    --muted:#555;
+    --field-bg:#fafaf7;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:#dcdcd4;
+    font-family:"Segoe UI", Tahoma, Arial, sans-serif;
+    color:var(--ink);
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+  .toolbar{
+    position:sticky; top:0; z-index:50;
+    background:var(--olive-dark); color:#fff;
+    padding:10px 18px; display:flex; gap:10px; align-items:center; justify-content:space-between;
+    font-size:13px;
+  }
+  .toolbar button{
+    background:#fff; color:var(--olive-dark); border:none; border-radius:4px;
+    padding:7px 14px; font-weight:600; cursor:pointer; font-size:13px;
+  }
+  .toolbar button:hover{ background:#f0f0e6; }
+  .toolbar .hint{ opacity:.85; }
+
+  .page{
+    max-width:900px;
+    margin:20px auto;
+    background:var(--paper);
+    border:1px solid #999;
+    padding:0;
+    box-shadow:0 2px 10px rgba(0,0,0,.2);
+  }
+  .page + .page{ margin-top:24px; }
+
+  /* ===== Header ===== */
+  .letterhead{
+    background:var(--olive);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:12px 18px;
+    gap:14px;
+  }
+  .lh-block{ font-size:11px; line-height:1.55; }
+  .lh-left{ text-align:left; }
+  .lh-right{ text-align:right; direction:rtl; }
+  .lh-row{ display:flex; align-items:center; gap:6px; }
+  .lh-right .lh-row{ justify-content:flex-end; }
+  .brand{
+    text-align:center; flex-shrink:0; min-width:150px;
+  }
+  .brand .logo{
+    display:block; width:72px; height:64px; object-fit:contain;
+    margin:0 auto 4px; border-radius:4px;
+  }
+  .brand .name{ font-weight:700; font-size:13px; letter-spacing:2px; }
+
+  .title-bar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 18px; border-bottom:2px solid var(--line);
+  }
+  .title-bar .ref{ font-size:12px; }
+  .title-bar .ref input{ border:none; border-bottom:1px dotted #999; width:130px; font-size:12px; background:transparent; }
+  .title-en-ar{ text-align:center; font-size:16px; font-weight:700; }
+  .title-en-ar .ar{ direction:rtl; margin-left:8px; }
+  .ra-no{ font-size:12px; display:flex; align-items:center; gap:6px; }
+  .ra-no input{ border:1px solid #999; padding:3px 6px; width:110px; font-size:12px; background:var(--field-bg); }
+
+  .location-row{
+    padding:6px 18px; border-bottom:1px solid #999; font-size:12px; display:flex; gap:8px; align-items:center;
+  }
+  .location-row input{ flex:1; border:none; border-bottom:1px dotted #999; background:transparent; font-size:12px; padding:3px 4px; }
+  .location-row .ar{ direction:rtl; }
+
+  /* ===== Bilingual field grid ===== */
+  table.grid{ width:100%; border-collapse:collapse; font-size:12px; }
+  table.grid td, table.grid th{ border:1px solid #999; padding:5px 8px; vertical-align:top; }
+  .lbl{ background:var(--field-bg); }
+  .lbl .en{ font-weight:600; display:block; }
+  .lbl .ar{ direction:rtl; display:block; color:var(--muted); font-size:11px; }
+  .fld input{ width:100%; border:none; background:transparent; font-size:12px; padding:2px 0; border-bottom:1px dotted #ccc; }
+  .fld input:focus{ outline:none; border-bottom:1px solid var(--olive-dark); }
+  .section-head{
+    background:var(--olive); color:#fff; font-weight:700; text-align:center;
+    padding:5px 8px; font-size:12px; letter-spacing:.5px;
+  }
+  .section-head .ar{ direction:rtl; font-weight:600; margin-inline-start:8px; }
+
+  /* Rate / vehicle two-column layout (table based so it never collapses) */
+  table.two-col{ width:100%; border-collapse:collapse; table-layout:fixed; border:1px solid #999; border-top:none; }
+  table.two-col > tbody > tr > td, table.two-col > tr > td{ vertical-align:top; padding:0; }
+  table.two-col td.col-left{ width:40%; border-right:1px solid #999; }
+  table.two-col td.col-right{ width:60%; }
+  table.grid.fixed{ table-layout:fixed; }
+  table.grid.fixed td{ word-wrap:break-word; overflow-wrap:break-word; }
+  .vehicle .lbl{ font-size:11px; }
+  .vehicle .fld input{ font-weight:600; min-width:0; }
+
+  .rate-opts{ display:flex; flex-wrap:wrap; gap:4px 10px; font-size:11px; align-items:center; }
+  .rate-opts label{ display:flex; align-items:center; gap:3px; }
+
+  /* ===== Checkout / Checkin diagram ===== */
+  .diagram-wrap{ display:flex; gap:10px; padding:10px; border:none; border-top:1px solid #999; }
+  .diagram-box{ flex:1; border:1px solid #ccc; padding:8px; text-align:center; }
+  .diagram-box h4{ margin:0 0 6px; font-size:12px; letter-spacing:1px; }
+  .car-svg{ width:100%; max-width:230px; }
+  .km-line{ margin-top:8px; font-size:11px; display:flex; justify-content:space-between; }
+  .km-line input{ width:80px; border:none; border-bottom:1px dotted #999; background:transparent; font-size:11px; }
+
+  /* ===== Remarks / totals ===== */
+  .remarks-total{ display:flex; border:1px solid #999; border-top:none; }
+  .remarks-box{ flex:1.4; padding:8px; border-right:1px solid #999; }
+  .remarks-box .cap{ font-weight:700; font-size:12px; margin-bottom:6px; }
+  .remarks-box textarea{ width:100%; height:70px; border:1px solid #ccc; background:var(--field-bg); font-family:inherit; font-size:11px; padding:4px; resize:vertical; }
+  .total-box{ flex:1; padding:8px; }
+  .total-row{ display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px; align-items:center;}
+  .total-row .opts label{ font-size:11px; margin-right:6px; }
+  .total-row input.amt{ width:90px; border:1px solid #ccc; background:var(--field-bg); font-size:11px; padding:3px 5px; text-align:right; }
+
+  /* ===== Card / signature ===== */
+  .card-strip{ border:1px solid #999; border-top:none; padding:8px; font-size:11px; }
+  .card-strip .lead{ font-size:11px; margin-bottom:6px; line-height:1.5; }
+  .card-strip .lead .ar{ direction:rtl; display:block; color:var(--muted); margin-top:2px; }
+  .digits{ display:flex; gap:3px; margin:4px 0; }
+  .digits input{ width:22px; height:24px; text-align:center; border:1px solid #999; font-size:11px; }
+  .card-row{ display:flex; gap:20px; flex-wrap:wrap; margin-top:4px; }
+  .card-field{ font-size:11px; }
+  .card-field .en{ font-weight:600; }
+
+  .ack-block{ border:1px solid #999; border-top:none; padding:10px 14px; font-size:10.5px; line-height:1.6; }
+  .ack-block .ar{ direction:rtl; text-align:right; margin-bottom:8px; color:#333; }
+  .ack-block .en{ color:#333; }
+  .ack-note{ margin-top:8px; font-size:10.5px; line-height:1.6; }
+  .ack-note .ar{ direction:rtl; text-align:right; display:block; margin-bottom:4px;}
+
+  .sig-row{ display:flex; border:1px solid #999; border-top:none; }
+  .sig-cell{ flex:1; padding:16px 10px 10px; text-align:center; font-size:11px; }
+  .sig-cell:not(:last-child){ border-right:1px solid #999; }
+  .sig-line{ border-bottom:1px dotted #999; height:34px; margin-bottom:6px; }
+  .sig-cell .ar{ direction:rtl; display:block; font-weight:600; }
+  .sig-cell .en{ display:block; color:var(--muted); }
+
+  /* ===== Terms page ===== */
+  .terms-page{ padding:18px 20px; }
+  .terms-title{ font-weight:700; font-size:14px; border-bottom:2px solid var(--line); padding-bottom:6px; margin-bottom:10px; display:flex; justify-content:space-between; }
+  .terms-title .ar{ direction:rtl; }
+  .terms-cols{ display:flex; gap:18px; }
+  .terms-cols .en-col{ flex:1; font-size:9.6px; line-height:1.5; }
+  .terms-cols .ar-col{ flex:1; font-size:10px; line-height:1.75; direction:rtl; text-align:right; }
+  .terms-cols ol{ padding-left:16px; margin:0; }
+  .terms-cols .ar-col ol{ padding-right:16px; padding-left:0; }
+  .terms-cols li{ margin-bottom:7px; }
+  .terms-cols b{ display:inline; }
+  .terms-foot{ margin-top:14px; border-top:1px solid #999; padding-top:10px; font-size:9.8px; line-height:1.55; }
+  .terms-foot .ar{ direction:rtl; text-align:right; display:block; margin-top:6px; }
+  .final-sign{ display:flex; justify-content:space-between; margin-top:26px; font-size:11px; }
+  .final-sign div{ width:32%; text-align:center; }
+  .final-sign .sig-line{ border-bottom:1px dotted #999; height:34px; margin-bottom:6px; }
+
+  @media print{
+    body{ background:#fff; }
+    .toolbar{ display:none; }
+    .page{ box-shadow:none; border:none; margin:0; }
+    .page{ page-break-after:always; }
+    .page:last-child{ page-break-after:auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="hint">Fillable template — type into the fields, then print or save as PDF.</span>
+  <button onclick="window.print()">Print / Save as PDF</button>
+</div>
+
+<!-- ===================== PAGE 1 ===================== -->
+<div class="page">
+
+  <div class="letterhead">
+    <div class="lh-block lh-left">
+      <div class="lh-row">☎ +971 4 2403196</div>
+      <div class="lh-row">☎ +971 50 7023899</div>
+      <div class="lh-row">✉ info@sleek-cars.com</div>
+      <div class="lh-row">📍 Arkan Al Mamzar, Business Center<br></div>
+      <div class="lh-row" style="margin-top:-4px;">&nbsp;&nbsp;Royal House Building - Hor Al Anz</div>
+      <div class="lh-row">🌐 www.sleek-cars.com</div>
+    </div>
+    <div class="brand">
+      <img class="logo" src="{% get_media_prefix %}sleeklogo.png" alt="Sleek Car Rental logo">
+      <div class="name">SLEEK CAR RENTAL LLC</div>
+    </div>
+    <div class="lh-block lh-right">
+      <div class="lh-row">+971٤٢٤٠٣١٩٦</div>
+      <div class="lh-row">+971٥٠٧٠٢٣٨٩٩</div>
+      <div class="lh-row">info@sleek-cars.com</div>
+      <div class="lh-row">أركان المميز، مركز الأعمال</div>
+      <div class="lh-row" style="margin-top:-4px;">مبنى رويال هاوس – هور العنز</div>
+      <div class="lh-row">www.sleek-cars.com</div>
+    </div>
+  </div>
+  <div style="text-align:center; font-size:11px; font-weight:700; padding:2px 0; border-bottom:1px solid #999;">
+    سليك لتأجير السيارات ش.ذ.م.م
+  </div>
+
+  <div class="title-bar">
+    <div class="ref">Ref No. <input type="text" value="{{ booking.id }}"></div>
+    <div class="title-en-ar">Rental Agreement <span class="ar">عقد تأجير</span></div>
+    <div class="ra-no">R.A. No: <input type="text"></div>
+  </div>
+
+  <div class="location-row">
+    <span><b>Location:</b></span>
+    <input type="text">
+    <span class="ar">الموقع</span>
+  </div>
+
+  <!-- Hirer / Additional driver -->
+  <table class="grid">
+    <tr>
+      <td class="lbl" style="width:25%;"><span class="en">Hirer Name</span><span class="ar">اسم المستأجر</span></td>
+      <td class="fld" style="width:25%;"><input type="text" value="{{ booking.name }}"></td>
+      <td class="lbl" style="width:25%;"><span class="en">Additional Driver</span><span class="ar">سائق إضافي</span></td>
+      <td class="fld" style="width:25%;"><input type="text"></td>
+    </tr>
+    <tr>
+      <td class="lbl"><span class="en">Nationality</span><span class="ar">الجنسية</span></td>
+      <td class="fld"><input type="text"></td>
+      <td class="lbl"><span class="en">Nationality</span><span class="ar">الجنسية</span></td>
+      <td class="fld"><input type="text"></td>
+    </tr>
+    <tr>
+      <td class="lbl"><span class="en">Date of Birth</span><span class="ar">تاريخ الميلاد</span></td>
+      <td class="fld"><input type="date"></td>
+      <td class="lbl"><span class="en">Date of Birth</span><span class="ar">تاريخ الميلاد</span></td>
+      <td class="fld"><input type="date"></td>
+    </tr>
+    <tr>
+      <td class="lbl"><span class="en">Passport / Trade License / ID No.</span><span class="ar">الجواز او الرخصة التجارية / رقم الهوية</span></td>
+      <td class="fld"><input type="text"></td>
+      <td class="lbl"><span class="en">Passport / Trade License / ID No.</span><span class="ar">الجواز او الرخصة التجارية / رقم الهوية</span></td>
+      <td class="fld"><input type="text"></td>
+    </tr>
+    <tr>
+      <td class="lbl"><span class="en">Issue Date</span><span class="ar">تاريخ الاصدار</span></td>
+      <td class="fld"><input type="date"></td>
+      <td class="lbl"><span class="en">Issue Date</span><span class="ar">تاريخ الاصدار</span></td>
+      <td class="fld"><input type="date"></td>
+    </tr>
+    <tr>
+      <td class="lbl"><span class="en">Expiry Date</span><span class="ar">تاريخ الانتهاء</span></td>
+      <td class="fld"><input type="date"></td>
+      <td class="lbl"><span class="en">Expiry Date</span><span class="ar">تاريخ الانتهاء</span></td>
+      <td class="fld"><input type="date"></td>
+    </tr>
+    <tr>
+      <td class="lbl"><span class="en">License No.</span><span class="ar">رقم رخصة القيادة</span></td>
+      <td class="fld"><input type="text"></td>
+      <td class="lbl"><span class="en">License No.</span><span class="ar">رقم رخصة القيادة</span></td>
+      <td class="fld"><input type="text"></td>
+    </tr>
+    <tr>
+      <td class="lbl"><span class="en">Issue Date</span><span class="ar">تاريخ الاصدار</span></td>
+      <td class="fld"><input type="date"></td>
+      <td class="lbl"><span class="en">Issue Date</span><span class="ar">تاريخ الاصدار</span></td>
+      <td class="fld"><input type="date"></td>
+    </tr>
+    <tr>
+      <td class="lbl"><span class="en">Expiry Date</span><span class="ar">تاريخ الانتهاء</span></td>
+      <td class="fld"><input type="date"></td>
+      <td class="lbl"><span class="en">Expiry Date</span><span class="ar">تاريخ الانتهاء</span></td>
+      <td class="fld"><input type="date"></td>
+    </tr>
+    <tr>
+      <td class="lbl"><span class="en">Mobile No.</span><span class="ar">رقم الجوال</span></td>
+      <td class="fld"><input type="tel" value="{{ booking.phone }}"></td>
+      <td class="lbl"><span class="en">E-mail</span><span class="ar">بريد إلكتروني</span></td>
+      <td class="fld"><input type="email" value="{{ booking.email }}"></td>
+    </tr>
+    <tr>
+      <td class="lbl"><span class="en">Address</span><span class="ar">عنوان</span></td>
+      <td class="fld" colspan="3"><input type="text"></td>
+    </tr>
+  </table>
+
+  <!-- Rate / Vehicle two column section -->
+  <table class="two-col">
+    <tr>
+    <td class="col-left">
+      <table class="grid fixed" style="border:none;">
+        <colgroup><col style="width:46%;"><col style="width:54%;"></colgroup>
+        <tr>
+          <td class="lbl" style="width:45%;"><span class="en">Rate</span><span class="ar">السعر</span>
+            <div class="rate-opts" style="margin-top:4px;">
+              <label><input type="checkbox"> Daily <span class="ar">يوميا</span></label>
+              <label><input type="checkbox"> Weekly <span class="ar">اسبوعي</span></label>
+              <label><input type="checkbox"> Monthly <span class="ar">شهريا</span></label>
+            </div>
+          </td>
+          <td class="fld"><input type="text" placeholder="AED"></td>
+        </tr>
+        <tr>
+          <td class="lbl"><span class="en">KMs Allowed</span><span class="ar">الكيلومترات المسموحة</span></td>
+          <td class="fld"><input type="text"></td>
+        </tr>
+        <tr>
+          <td class="lbl"><span class="en">KMs Charged</span><span class="ar">حساب الكيلومتر</span></td>
+          <td class="fld"><input type="text"></td>
+        </tr>
+        <tr>
+          <td class="lbl"><span class="en">CDW Rate</span><span class="ar">مبلغ التحمل للتامين</span></td>
+          <td class="fld"><input type="text"></td>
+        </tr>
+        <tr>
+          <td class="lbl"><span class="en">PAI Rate</span><span class="ar">مبلغ الضمان</span></td>
+          <td class="fld"><input type="text"></td>
+        </tr>
+        <tr>
+          <td class="lbl"><span class="en">Fuel Charges</span><span class="ar">تكلفة الوقود</span></td>
+          <td class="fld"><input type="text"></td>
+        </tr>
+        <tr>
+          <td class="lbl"><span class="en">Toll Charges</span><span class="ar">رسوم المرور</span></td>
+          <td class="fld"><input type="text"></td>
+        </tr>
+        <tr>
+          <td class="lbl"><span class="en">Traffic Fine</span><span class="ar">غرامة مرور</span></td>
+          <td class="fld"><input type="text"></td>
+        </tr>
+        <tr>
+          <td class="lbl"><span class="en">Damages</span><span class="ar">الأضرار</span></td>
+          <td class="fld"><input type="text"></td>
+        </tr>
+        <tr>
+          <td class="lbl"><span class="en">Bank / Other Charges</span><span class="ar">رسوم البنك / الرسوم الأخرى</span></td>
+          <td class="fld"><input type="text"></td>
+        </tr>
+        <tr>
+          <td class="lbl"><span class="en">VAT</span><span class="ar">ضريبة</span></td>
+          <td class="fld"><input type="text"></td>
+        </tr>
+      </table>
+    </td>
+    <td class="col-right">
+
+      <!-- Vehicle details -->
+      <table class="grid fixed vehicle" style="border:none;">
+        <colgroup>
+          <col style="width:22%;"><col style="width:28%;"><col style="width:22%;"><col style="width:28%;">
+        </colgroup>
+        <tr>
+          <td class="lbl"><span class="en">Vehicle Type</span><span class="ar">نوع المركبة</span></td>
+          <td class="fld"><input type="text" value="{{ booking.car.name }}"></td>
+          <td class="lbl"><span class="en">Plate No.</span><span class="ar">رقم اللوحة</span></td>
+          <td class="fld"><input type="text" value="{% firstof booking.car.plate_number booking.car.plate booking.car.number_plate booking.car.registration_number booking.car.license_plate %}"></td>
+        </tr>
+        <tr>
+          <td class="lbl"><span class="en">Vehicle Colour</span><span class="ar">لون المركبة</span></td>
+          <td class="fld"><input type="text" value="{% firstof booking.car.color booking.car.colour %}"></td>
+          <td class="lbl"><span class="en">Model / Year</span><span class="ar">سنة الصنع / الموديل</span></td>
+          <td class="fld"><input type="text" value="{% firstof booking.car.year booking.car.model_year %}"></td>
+        </tr>
+        <tr>
+          <td class="lbl"><span class="en">Date Out</span><span class="ar">تاريخ المغادرة</span></td>
+          <td class="fld"><input type="text" value="{{ booking.pickup_date|date:'d/m/Y' }}"></td>
+          <td class="lbl"><span class="en">Time Out</span><span class="ar">وقت المغادرة</span></td>
+          <td class="fld"><input type="text" value="{{ booking.pickup_time }}"></td>
+        </tr>
+        <tr>
+          <td class="lbl"><span class="en">Date In</span><span class="ar">تاريخ العودة</span></td>
+          <td class="fld"><input type="text" value="{{ booking.dropoff_date|date:'d/m/Y' }}"></td>
+          <td class="lbl"><span class="en">Time In</span><span class="ar">وقت العودة</span></td>
+          <td class="fld"><input type="text" value="{{ booking.dropoff_time }}"></td>
+        </tr>
+      </table>
+
+      <!-- Check out / Check in vehicle diagrams -->
+      <div class="diagram-wrap">
+        <div class="diagram-box">
+          <h4>CHECK OUT</h4>
+          <svg class="car-svg" viewBox="0 0 220 130" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="110" cy="65" rx="95" ry="55" fill="none" stroke="#333" stroke-width="1.2"/>
+            <rect x="70" y="18" width="80" height="94" fill="none" stroke="#333" stroke-width="1"/>
+            <line x1="110" y1="18" x2="110" y2="112" stroke="#333" stroke-width="1"/>
+            <text x="110" y="14" font-size="7" text-anchor="middle">HEAD LIGHTS</text>
+            <text x="35" y="65" font-size="7" text-anchor="middle">DOOR</text>
+            <text x="185" y="65" font-size="7" text-anchor="middle">DOOR</text>
+            <text x="110" y="40" font-size="7" text-anchor="middle">WIND SCREEN</text>
+            <text x="110" y="90" font-size="7" text-anchor="middle">ROOF</text>
+            <text x="110" y="125" font-size="7" text-anchor="middle">Fuel &nbsp; E &nbsp;—&nbsp; F</text>
+          </svg>
+          <div class="km-line">KM <input type="text"></div>
+        </div>
+        <div class="diagram-box">
+          <h4>CHECK IN</h4>
+          <svg class="car-svg" viewBox="0 0 220 130" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="110" cy="65" rx="95" ry="55" fill="none" stroke="#333" stroke-width="1.2"/>
+            <rect x="70" y="18" width="80" height="94" fill="none" stroke="#333" stroke-width="1"/>
+            <line x1="110" y1="18" x2="110" y2="112" stroke="#333" stroke-width="1"/>
+            <text x="110" y="14" font-size="7" text-anchor="middle">HEAD LIGHTS</text>
+            <text x="35" y="65" font-size="7" text-anchor="middle">DOOR</text>
+            <text x="185" y="65" font-size="7" text-anchor="middle">DOOR</text>
+            <text x="110" y="40" font-size="7" text-anchor="middle">WIND SCREEN</text>
+            <text x="110" y="90" font-size="7" text-anchor="middle">ROOF</text>
+            <text x="110" y="125" font-size="7" text-anchor="middle">Fuel &nbsp; E &nbsp;—&nbsp; F</text>
+          </svg>
+          <div class="km-line">KM <input type="text"></div>
+        </div>
+      </div>
+    </td>
+    </tr>
+  </table>
+
+  <!-- Remarks / Total -->
+  <div class="remarks-total">
+    <div class="remarks-box">
+      <div class="cap">Remarks <span style="direction:rtl; display:inline-block;">ملاحظات</span></div>
+      <textarea>Booking #{{ booking.id }} | Payment: {{ booking.get_payment_status_display }}{% if booking.baby_seat %} | Baby seat requested{% endif %}</textarea>
+    </div>
+    <div class="total-box">
+      <div class="total-row">
+        <span>Advance <span style="direction:rtl;">سالف</span></span>
+        <span class="opts">
+          <label><input type="checkbox"> Cash</label>
+          <label><input type="checkbox" {% if booking.pay_now and booking.payment_status == 'paid' %}checked{% endif %}> CC</label>
+        </span>
+      </div>
+      <div class="total-row">
+        <span>Security <span style="direction:rtl;">ضمان</span></span>
+        <span class="opts"><label><input type="checkbox"> Cash</label><label><input type="checkbox"> CC</label></span>
+      </div>
+      <div class="total-row">
+        <b>Total <span style="direction:rtl;">المجموع</span></b>
+        <input type="text" class="amt" placeholder="AED" value="AED {{ booking.total_price|floatformat:2 }}">
+      </div>
+    </div>
+  </div>
+
+  <!-- Card authorization strip -->
+  <div class="card-strip">
+    <div class="lead">
+      Hereby confirm for any payment, without intimation, my/our signature below shall constitute authority to debit my nominated card (Credit/Debit) for the total amount with service charges presently due or additional that may occur in future.
+      <span class="ar">أؤكد بموجب هذا أنه بالنسبة لأية دفعة، دون سابق إنذار، فإن توقيعي/توقيعنا أدناه يشكل تفويضا بخصم المبلغ الإجمالي من بطاقتي/بطاقتنا المحددة (الائتمان/الخصم) بالإضافة إلى رسوم الخدمة المستحقة حاليا أو الإضافية التي قد تحدث في المستقبل.</span>
+    </div>
+    <div class="card-row">
+      <div class="card-field"><span class="en">Card No.</span> <span class="ar" style="direction:rtl;">رقم البطاقة</span>
+        <div class="digits">
+          <input maxlength="1"><input maxlength="1"><input maxlength="1"><input maxlength="1">
+          <input maxlength="1"><input maxlength="1"><input maxlength="1"><input maxlength="1">
+          <input maxlength="1"><input maxlength="1"><input maxlength="1"><input maxlength="1">
+          <input maxlength="1"><input maxlength="1"><input maxlength="1"><input maxlength="1">
+        </div>
+      </div>
+      <div class="card-field"><span class="en">Expiry Date</span> <span class="ar" style="direction:rtl;">تاريخ الانتهاء</span><br>
+        <input type="text" style="width:70px; border:1px solid #999; font-size:11px; padding:2px 4px; margin-top:4px;">
+      </div>
+      <div class="card-field"><span class="en">CVV</span> <span class="ar" style="direction:rtl;">الرقم السري</span><br>
+        <div class="digits" style="margin-top:4px;"><input maxlength="1"><input maxlength="1"><input maxlength="1"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Acknowledgement -->
+  <div class="ack-block">
+    <span class="ar">أقر بأنني/نحن قد قرأنا ووافقنا على الشروط والأحكام التالية والتي تشكل جزءا من هذه الاتفاقية. في حالة وقوع حادث، يكون المستأجر مسؤولا عن رسوم المسؤولية الزائدة وفقا لسياسة الشركة لجميع حالات الخطأ من جانبه والمجهول. في حال، سيارتي، يكون المستأجر مسؤولا عن دفع رسوم الإيجار المتكبدة خلال فترة الإصلاح. يُمنع بالمطلق التدخين وإحضار الحيوانات الأليفة بشكل صارم في السيارة، وسيتم تطبيق غرامة قدرها 1000 درهم إماراتي في حال مخالفة هذا الشرط.</span>
+    <span class="en">Acknowledge that I/We have read and agreed to the terms and conditions printed overleaf and is made a part of this agreement. In the event of an accident, the hirer will be responsible for the excess liability charges as per the company policy for all at fault and unknown accident cases. In any scenario the hirer is liable to pay the hire charges incurred during the repair period. Smoking / pets are strictly not allowed in the vehicle, and penalty of AED 1000 would be applicable if violated.</span>
+    <div class="ack-note">
+      <span class="ar">سيتم تطبيق رسوم إدارية إضافية قدرها 1 درهم لكل مرور، ورسم إداري قدره 50 درهما إماراتيا للغرامات، و1000 درهم إماراتي للمصادرة. يجب على المستأجر دفع رسوم استخدام الوقود بالإضافة إلى الرسم الإداري البالغ 50 درهما إماراتيا في حالة إعادتها بكمية وقود أقل. يحق لشركة سليك إيقاف السيارة واستردادها إذا خالف المستأجر أيا من أحكام هذه الاتفاقية.</span>
+      <span class="en">Additional AED 1 pass will be applicable as admin fee for the toll charges. The lessor may impose admin fee of AED 50 for fines and AED 1000 for Impound Fines / Black points incurred. The hirer must pay the fuel usage fee in addition to an admin fee of AED 50 if returned with less fuel. Excess mileage fee would be charged based on the vehicle type. The lessor has the right to shut down and recover the vehicle if the hirer violates any of the provisions of this agreement.</span>
+    </div>
+  </div>
+
+  <!-- Signatures -->
+  <div class="sig-row">
+    <div class="sig-cell">
+      <div class="sig-line"></div>
+      <span class="ar">إلى عن سليك</span>
+      <span class="en">For SLEEK</span>
+    </div>
+    <div class="sig-cell">
+      <div class="sig-line"></div>
+      <span class="ar">توقيع سائق إضافي</span>
+      <span class="en">Signature Of Additional Driver</span>
+    </div>
+    <div class="sig-cell">
+      <div class="sig-line"></div>
+      <span class="ar">توقيع / ختم المستأجر</span>
+      <span class="en">Signature / Stamp Of The Hirer</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===================== PAGE 2 — TERMS ===================== -->
+<div class="page terms-page">
+  <div class="terms-title">
+    <span>Terms &amp; Conditions</span>
+    <span class="ar">مصطلحات</span>
+  </div>
+
+  <div class="terms-cols">
+    <div class="en-col">
+      <ol>
+        <li><b>The Vehicle:</b> What is being leased, according to provisions made in the contract referred to as ('the Vehicle'). <b>The Lessee:</b> the person or company signs or seals the Lease and thus shall be wholly responsible for the Vehicle for renting purposes.</li>
+        <li><b>General Conditions:</b> There are general conditions made by the "SleekCar Rental (LLC)". It referred to as "Sleek". Under this contract, lease is what stated in the contract under the following conditions and provisions, and by signature or stamp, whether the person is a person or company; the following conditions.</li>
+        <li><b>Rental rates:</b> rent daily on the basis of a "a full day", "24 hrs", starting from the receiving the vehicle by the lessee. Minimum rate for one Day only, in addition to the mileage in excess. The lessee shall pay for each hour or part of that time for the agreed period of time retrieved the Vehicle and depending on the price decision, and the lessee shall pay an additional amount for excess mileage, as well as in the case of non-recovery of at vehicle at the agreed time.</li>
+        <li><b>Delivery and Retrieval:</b> the Vehicle shall be given to the lessee, indicating its status in "annexed" to the lease for any scratches or damage (if any)and any complaint about the delivery on the vehicle should be submitted by the lessee immediately when getting the vehicle to Sleek, as shown in the lease and any "Report of the vehicle condition", otherwise, this shall be taken by the lessee at the delivery period of time and considered a settlement with the lessee to Sleek and appropriate to cover the damage, to imply right background for the damage followed and above &nbsp;- mentioned.</li>
+        <li><b>Conditions of use:</b> the lessee may not use the vehicle off the road or for sports cars or racing or any activities that can be harmful to the vehicle or damage to third parties (other parties); and the lessee shall bear all consequences and damage caused for such damage to use.</li>
+        <li><b>Age allowed for a driver:</b> the minimum age allowed to rent a vehicle from Sleek is not less than 25 years old and the license must be issued since "one year" by the UAE, and must be valid. It is proved otherwise, the lessee will bear all the consequences and damage to the vehicle and other parties.</li>
+        <li><b>Authorised drivers:</b> The person or company signs or seals the lease shall be the authorised one when leasing the vehicle. Therefore, the lessee shall be liable for all damages "annexed and mentioned earlier in the lease". In case of breach of the conditions mentioned in the contract, is not entitles to any other person to drive the vehicle without permission and written consent of Sleek.</li>
+        <li><b>Terms of payment by credit card:</b> The lessee shall provide a credit card in his name and the record card number in connection with signing the lease. And provided there are enough credit in the account at time of hiring the vehicle and will be deducted for the total amount of value approximated by Sleek upon the knowledge and consent of the lessee. Reservation shall not be cancelled only after taking full dues by Sleek/whether the value of the lease or fines or damages or payments to any party (third party or irregularities on the Government of the UAE, etc.).</li>
+        <li><b>Geographical Boundaries:</b> the Lessee may not drive the vehicle outside the borders of the United Arab Emirates, and there is no insurance on the vehicle in the event of driving the vehicle outside the UAE. If there is a request to drive outside the boundaries of the State, the lessee should receive a written approval of Sleek. In this case, the lessee shall be liable for any damages regardless of going out of the state even having permission from Sleek on this regard.</li>
+        <li><b>Insurance:</b> Sleek company provides to the lessee at the moment of signing of the insurance all information about the quality of insurance and things are covered and not covered, according to the agreement between Sleek and the insurance company contracted with Sleek.</li>
+        <li><b>Compensation:</b> the lessee shall compensate for any loss inflicted on Sleek for the value of the damage and in case of breach of the lessee law and the terms of lease and legal responsibility to the lessee in the above cases and the following: A. In case of damage or partial total loss and start of the vehicle based on the contract between Sleek and the lessee, and on what is suitable to Sleek to be given in addition, rights of the lessee and the amount to be compensated for Sleek in addition, the lessee shall bear the following costs because of the value or loss caused by the insurance company:
+          <ol style="margin-top:6px;">
+            <li>Costs of getting the vehicle and the period of putting out of action.</li>
+            <li>Loss resulting from improper use, and lead to decrease the value of the vehicle regardless of the reasons.</li>
+            <li>Cost of the rent restarting from the time of the incident.</li>
+            <li>Any increased costs paid by Sleek as a result of damage of loss of vehicle such as paying to the Court or any legal or administrative fees.</li>
+          </ol>
+        </li>
+        <li><b>Insurance shall not cover the following cases:</b>
+          A. Sub-leasing the vehicle by any person, company, or entity whatsoever, unless the lessee receives a written approval of Sleek.<br>
+          B. If the lessee is Intoxicate State ( Alcohol, or under the influence of a drug, etc.)<br>
+          C. Driving the vehicle by a third party not mentioned in the lease in case of non-reporting and should provide Sleek with the entire driver ‘ the Third Party" papers, provided the writing consent from Sleek.<br>
+          D. Driving the vehicle outside the boarders of the UAE.<br>
+          In the above-mentioned cases, the lessee shall be liable to pay 100% of the amount of loss or damage, or damage occurring to the vehicle, including families of other parties/ third parties and any other personal injury / death, or property incurred when renting the vehicle from Sleek during the period of rental Vehicle.
+        </li>
+        <li><b>Costs and Fees:</b> The lessee shall be responsible for payment of the full cost resulting from the use of the leased vehicle during the lease period as stipulated in the lease and contract terms. The lessee shall pay violations, or fines, or court cost or any other expenses imposed on Sleek and for any other legal dues from the use of the vehicle during the leasing. The lessee shall not be responsible of direct responsibility to any governmental or non-governmental authority due to the illegal disposal of damages of any harmless disposal. The lessee must follow the below in case of accident or theft or in the event of a harmful disposal.
+          <ol style="margin-top:6px;">
+            <li>A. It is a must to call the police immediately and Sleek shall be all cases above at the scene of the accident (if any), the lessee shall have a police report.</li>
+            <li>B.The lessee shall maintain the confidentiality of information to all parties in the case when witness were asked to complete a police report.</li>
+            <li>C. Under any circumstances, the lessee must accept a collection of third party(any authority)</li>
+            <li>D.The lessee shall co-operate and assist Sleek and the insurance company with all costs and legal affairs relating to loss, theft or damage.</li>
+            <li>E. In the event of any damage to the vehicle, the lessee may not repair the vehicle without asking Sleek and having a written consent to do so and otherwise bear the consequences of the lessee to do so.</li>
+          </ol>
+        </li>
+        <li><b>Payments of costs and fees:</b> The lessee shall pay any costs or fees owed to Sleek or any other source, according to the terms and conditions of the lease agreement between Sleek and the lessee.</li>
+        <li><b>Deduct from Credit Card:</b> The lessee shall agree, upon signing the lease, that or any other source, according to the terms and conditions of the lease agreement between Sleek and the lessee.</li>
+        <li><b>Personal data:</b> the lessee knows that the personal data related to renting the vehicle any be accessed by other parties, particularly for the purpose of protection of the debts by him.</li>
+        <li><b>The right to consider the claim:</b> Lease shall be appropriate to the laws of the UAE, and shall be in effect in the Emirate, where the contract was made.</li>
+        <li><b>The Arabic text shall prevail in case of any difference in the text.</b></li>
+      </ol>
+    </div>
+
+    <div class="ar-col">
+      <ol>
+        <li><b>المركبة:</b> هي التي يتم تأجيرها وفقا لبنود ذكرها في العقد ويشار إليها بـ (المركبة). <b>المستأجر:</b> هو الشخص أو الشركة التي توقع أو تختم عقد التأجير وبذلك يكون مسؤولا بالكامل عن المركبة المستأجرة.</li>
+        <li><b>شروط عامة:</b> هناك شروط عامة يضعها من قبل شركة تأجير سيارات سليك ش.ذ.م.م، يشار إليها بـ"سليك". وبموجب هذا العقد يخضع الإيجار المذكور في هذه الصفحة والتي تشكل جزءا من هذه الاتفاقية سواء كان المستأجر شخصا أو شركة، وباستخدام هذه الشروط والأحكام التالية.</li>
+        <li><b>معدلات الإيجار:</b> يحسب الإيجار على أساس اليوم الكامل 24 ساعة اعتبارا من وقت استلام المستأجر للمركبة. الحد الأدنى للإيجار يوم واحد فقط، بالإضافة إلى الكيلومترات الزائدة إن وجدت. يدفع المستأجر عن كل ساعة أو جزء منها في حالة تأخير إعادة المركبة عن الوقت المتفق عليه، ويدفع المستأجر مبلغا إضافيا عن الكيلومترات الزائدة، وكذلك في حالة عدم إرجاع المركبة في الوقت المتفق عليه.</li>
+        <li><b>التسليم والاستلام:</b> يتم تسليم المركبة للمستأجر مع بيان حالتها في "ملحق العقد" من حيث الخدوش أو الأضرار إن وجدت، وأي شكوى عن حالة المركبة يجب أن يتم تقديمها من قبل المستأجر إلى سليك فور استلام المركبة، كما هو موضح في العقد وأي "تقرير عن حالة المركبة"، وإلا يعتبر ذلك بمثابة تسوية بين المستأجر وسليك بشأن الأضرار وموافقة على استلام المركبة بالحالة الموصوفة أعلاه.</li>
+        <li><b>شروط الاستعمال:</b> لا يجوز للمستأجر استعمال المركبة خارج الطرق المخصصة أو في سباقات السيارات أو أي نشاط قد يضر بالمركبة أو يسبب ضررا للغير (أطراف أخرى)؛ ويتحمل المستأجر كافة النتائج والأضرار الناجمة عن سوء الاستعمال.</li>
+        <li><b>السن المسموح به للسائق:</b> الحد الأدنى لسن السائق المسموح له باستئجار مركبة من سليك هو 25 عاما، ويجب أن تكون رخصة القيادة صادرة منذ سنة واحدة على الأقل من دولة الإمارات العربية المتحدة، ويجب أن تكون سارية المفعول. وفي حال إثبات خلاف ذلك، يتحمل المستأجر جميع النتائج والأضرار التي تلحق بالمركبة والأطراف الأخرى.</li>
+        <li><b>السائقون المخولون:</b> يكون الشخص أو الشركة الموقعة أو الخاتمة على العقد هي المخولة بقيادة المركبة عند التأجير. وبالتالي يكون المستأجر مسؤولا عن جميع الأضرار "الملحقة والمذكورة سابقا في العقد". وفي حال مخالفة الشروط المذكورة في العقد، لا يحق لأي شخص آخر قيادة المركبة دون إذن وموافقة خطية من سليك.</li>
+        <li><b>شروط الدفع ببطاقة الائتمان:</b> يجب على المستأجر تقديم بطاقة ائتمان باسمه وتسجيل رقم البطاقة عند توقيع العقد، والتأكد من وجود رصيد كاف في الحساب وقت استئجار المركبة يتم خصمه للمبلغ الإجمالي المقدر من قبل سليك بناء على علم وموافقة المستأجر. لا يمكن إلغاء الحجز إلا بعد استيفاء كامل المستحقات لدى سليك سواء كانت قيمة الإيجار أو الغرامات أو الأضرار أو المدفوعات لأي طرف (طرف ثالث) أو المخالفات الحكومية لدولة الإمارات وغيرها.</li>
+        <li><b>الحدود الجغرافية:</b> لا يجوز للمستأجر قيادة المركبة خارج حدود دولة الإمارات العربية المتحدة، ولا يوجد تأمين على المركبة في حال قيادتها خارج الدولة. وفي حال طلب القيادة خارج حدود الدولة، يجب على المستأجر الحصول على موافقة خطية من سليك. وفي هذه الحالة يكون المستأجر مسؤولا عن أي أضرار بصرف النظر عن الخروج من الدولة حتى مع وجود إذن من سليك في هذا الشأن.</li>
+        <li><b>التأمين:</b> توفر شركة سليك للمستأجر عند توقيع العقد كافة المعلومات المتعلقة بنوعية التأمين وما هو مشمول وغير مشمول، وفقا للاتفاقية المبرمة بين سليك وشركة التأمين المتعاقد معها.</li>
+        <li><b>التعويض:</b> يجب على المستأجر تعويض أي خسارة تلحق بسليك عن قيمة الضرر، وفي حال مخالفة المستأجر للقانون وشروط العقد والمسؤولية القانونية للمستأجر في الحالات أعلاه وما يلي: أ. في حالة الضرر أو الخسارة الجزئية أو الكلية للمركبة استنادا إلى العقد بين سليك والمستأجر، وما يناسب سليك أن يمنح بالإضافة إلى ذلك، حقوق المستأجر والمبلغ الواجب تعويضه لسليك بالإضافة إلى ذلك، يتحمل المستأجر التكاليف التالية بسبب قيمة الضرر أو الخسارة التي تسببها شركة التأمين:
+          <ol style="margin-top:6px;">
+            <li>1. تكاليف إحضار المركبة وفترة توقفها عن العمل.</li>
+            <li>2. الخسارة الناتجة عن سوء الاستعمال، والتي تؤدي إلى انخفاض قيمة المركبة بصرف النظر عن الأسباب.</li>
+            <li>3. تكلفة إعادة تشغيل الإيجار اعتبارا من وقت الحادث.</li>
+            <li>4. أي تكاليف إضافية تدفعها سليك نتيجة تلف أو فقدان المركبة مثل دفعها للمحكمة أو أي رسوم قانونية أو إدارية.</li>
+          </ol>
+        </li>
+        <li><b>لا يغطي التأمين الحالات التالية:</b>
+          أ. تأجير المركبة من الباطن من قبل أي شخص أو شركة أو جهة كانت، إلا إذا حصل المستأجر على موافقة خطية من سليك.<br>
+          ب. إذا كان المستأجر في حالة سكر (تحت تأثير الكحول أو المخدرات، إلخ).<br>
+          ج. قيادة المركبة من قبل طرف ثالث غير مذكور في العقد في حال عدم الإبلاغ وتزويد سليك بكافة أوراق السائق "الطرف الثالث"، شريطة الحصول على موافقة خطية من سليك.<br>
+          د. قيادة المركبة خارج حدود دولة الإمارات.<br>
+          في الحالات المذكورة أعلاه، يكون المستأجر مسؤولا عن دفع 100% من قيمة الخسارة أو الضرر، أو الضرر الذي يلحق بالمركبة، بما في ذلك عائلات الأطراف الأخرى / الأطراف الثالثة وأي إصابة شخصية أخرى/ وفاة، أو ممتلكات يتم تكبدها أثناء استئجار المركبة من سليك خلال فترة تأجير المركبة.
+        </li>
+        <li><b>التكاليف والرسوم:</b> يكون المستأجر مسؤولا عن دفع كامل التكلفة الناتجة عن استخدام المركبة المستأجرة خلال فترة الإيجار كما هو منصوص عليه في شروط العقد والإيجار. يدفع المستأجر المخالفات أو الغرامات أو تكاليف المحكمة أو أي مصاريف أخرى مفروضة على سليك وأي رسوم قانونية أخرى ناتجة عن استخدام المركبة أثناء التأجير. لا يكون المستأجر مسؤولا بشكل مباشر أمام أي جهة حكومية أو غير حكومية بسبب التخلص غير القانوني من أي أضرار أو أي تخلص غير ضار. يجب على المستأجر اتباع ما يلي في حال وقوع حادث أو سرقة أو في حال وقوع أي تصرف ضار.
+          <ol style="margin-top:6px;">
+            <li>أ. يجب الاتصال بالشرطة فورا وتكون سليك حاضرة في جميع الحالات المذكورة أعلاه في موقع الحادث (إن وجد)، ويجب على المستأجر الحصول على تقرير الشرطة.</li>
+            <li>ب. يجب على المستأجر الحفاظ على سرية المعلومات لجميع الأطراف في حال طلب من الشهود استكمال تقرير الشرطة.</li>
+            <li>ج. تحت أي ظرف من الظروف، يجب على المستأجر قبول تحصيل من طرف ثالث (أي جهة).</li>
+            <li>د. يجب على المستأجر التعاون ومساعدة سليك وشركة التأمين في جميع التكاليف والشؤون القانونية المتعلقة بالخسارة أو السرقة أو الضرر.</li>
+            <li>هـ. في حال وقوع أي ضرر بالمركبة، لا يجوز للمستأجر إصلاح المركبة دون طلب سليك والحصول على موافقة خطية بذلك، وإلا يتحمل المستأجر نتائج قيامه بذلك.</li>
+          </ol>
+        </li>
+        <li><b>دفع التكاليف والرسوم:</b> يجب على المستأجر دفع أي تكاليف أو رسوم مستحقة لسليك أو أي مصدر آخر، وفقا لشروط وأحكام عقد الإيجار المبرم بين سليك والمستأجر.</li>
+        <li><b>الخصم من بطاقة الائتمان:</b> يوافق المستأجر عند توقيع العقد على أنه أو من مصدر آخر، وفقا لشروط وأحكام عقد الإيجار المبرم بين سليك والمستأجر.</li>
+        <li><b>البيانات الشخصية:</b> يعلم المستأجر أن بياناته الشخصية المتعلقة باستئجار المركبة قد يتم الاطلاع عليها من قبل أطراف أخرى، لا سيما لغرض حماية الديون المستحقة عليه.</li>
+        <li><b>الحق في النظر في المطالبة:</b> يخضع عقد الإيجار لقوانين دولة الإمارات العربية المتحدة، ويكون ساري المفعول في الإمارة التي تم فيها إبرام العقد.</li>
+        <li><b>يسود النص العربي في حال وجود أي اختلاف في النص.</b></li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="final-sign">
+    <div><div class="sig-line"></div><span style="display:block; direction:rtl;">إلى عن سليك</span><span style="color:#666;">For SLEEK</span></div>
+    <div><div class="sig-line"></div><span style="display:block; direction:rtl;">توقيع سائق إضافي</span><span style="color:#666;">Signature Of Additional Driver</span></div>
+    <div><div class="sig-line"></div><span style="display:block; direction:rtl;">توقيع / ختم المستأجر</span><span style="color:#666;">Signature / Stamp Of The Hirer</span></div>
+  </div>
+</div>
+
+</body>
+</html>

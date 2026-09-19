@@ -5,9 +5,18 @@ from .views import (
     CarDetailAPIView,
     BookingListCreateAPIView,
     BookingDetailAPIView,
+    InvoiceAPIView,
     stripe_webhook,
+    SendBookingEmailAPIView
 )
 urlpatterns = [
+
+    # Rental agreement / invoice template
+    path(
+        'invoice/',
+        InvoiceAPIView.as_view(),
+        name='invoice'
+    ),
 
     # Cars
     path(
@@ -40,5 +49,10 @@ urlpatterns = [
         'stripe/webhook/',
         stripe_webhook,
         name='stripe-webhook'
+    ),
+    path(
+        'bookings/<int:pk>/send-email/',
+        SendBookingEmailAPIView.as_view(),
+        name='send-booking-email'
     ),
 ]
