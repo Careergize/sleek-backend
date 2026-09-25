@@ -23,4 +23,9 @@ class BookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
         fields = '__all__'
-        read_only_fields = ['status', 'payment_status']
+    #     read_only_fields = ['payment_status']   # 'status' is writable now
+
+    # def validate_status(self, value):
+    #     if value not in ('pending', 'confirmed'):
+    #         raise serializers.ValidationError("Invalid status.")
+    #     return value
