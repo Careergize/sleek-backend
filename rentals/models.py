@@ -5,6 +5,13 @@ from django.db import models
 
 class Car(models.Model):
 
+    STATUS_CHOICES = [
+        ('available', 'Available'),
+        ('booked', 'Booked'),
+        ('maintenance', 'Maintenance'),
+        ('inactive', 'Inactive'),
+    ]
+
     CATEGORY_CHOICES = [
         ('sedan', 'Sedan'),
         ('suv', 'SUV'),
@@ -61,8 +68,15 @@ class Car(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='available'
+    )
+
     def __str__(self):
         return f"{self.brand} {self.name}"
+    
 
 
 class Booking(models.Model):
