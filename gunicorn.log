@@ -1,14 +1,14 @@
-[2026-09-19 10:44:32 +0000] [95938] [INFO] Starting gunicorn 23.0.0
-[2026-09-19 10:44:32 +0000] [95938] [INFO] Listening at: http://127.0.0.1:8000 (95938)
-[2026-09-19 10:44:32 +0000] [95938] [INFO] Using worker: sync
-[2026-09-19 10:44:32 +0000] [95943] [INFO] Booting worker with pid: 95943
-[2026-09-19 10:44:32 +0000] [95944] [INFO] Booting worker with pid: 95944
-[2026-09-19 10:44:32 +0000] [95945] [INFO] Booting worker with pid: 95945
-[2026-09-19 12:43:21 +0000] [95938] [INFO] Handling signal: hup
-[2026-09-19 12:43:21 +0000] [95938] [INFO] Hang up: Master
-[2026-09-19 12:43:21 +0000] [95938] [ERROR] Worker (pid:95945) was sent SIGHUP!
-[2026-09-19 12:43:21 +0000] [96195] [INFO] Booting worker with pid: 96195
-[2026-09-19 12:43:21 +0000] [96196] [INFO] Booting worker with pid: 96196
-[2026-09-19 12:43:21 +0000] [96194] [INFO] Booting worker with pid: 96194
-[2026-09-19 12:43:21 +0000] [95938] [ERROR] Worker (pid:95944) was sent SIGHUP!
-[2026-09-19 12:43:21 +0000] [95938] [ERROR] Worker (pid:95943) was sent SIGHUP!
+[2026-09-25 15:26:23 +0000] [120397] [INFO] Starting gunicorn 23.0.0
+[2026-09-25 15:26:23 +0000] [120397] [INFO] Listening at: http://127.0.0.1:8000 (120397)
+[2026-09-25 15:26:23 +0000] [120397] [INFO] Using worker: sync
+[2026-09-25 15:26:23 +0000] [120402] [INFO] Booting worker with pid: 120402
+[2026-09-25 15:26:23 +0000] [120403] [INFO] Booting worker with pid: 120403
+[2026-09-25 15:26:23 +0000] [120404] [INFO] Booting worker with pid: 120404
+[2026-09-25 15:35:59 +0000] [120397] [INFO] Handling signal: hup
+[2026-09-25 15:35:59 +0000] [120397] [INFO] Hang up: Master
+[2026-09-25 15:35:59 +0000] [120397] [ERROR] Worker (pid:120402) was sent SIGHUP!
+[2026-09-25 15:35:59 +0000] [120490] [INFO] Booting worker with pid: 120490
+[2026-09-25 15:35:59 +0000] [120492] [INFO] Booting worker with pid: 120492
+[2026-09-25 15:35:59 +0000] [120493] [INFO] Booting worker with pid: 120493
+[2026-09-25 15:35:59 +0000] [120397] [ERROR] Worker (pid:120403) was sent SIGHUP!
+[2026-09-25 15:35:59 +0000] [120397] [ERROR] Worker (pid:120404) was sent SIGHUP!
