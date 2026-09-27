@@ -1,14 +1,14 @@
-[2026-09-25 15:26:23 +0000] [120397] [INFO] Starting gunicorn 23.0.0
-[2026-09-25 15:26:23 +0000] [120397] [INFO] Listening at: http://127.0.0.1:8000 (120397)
-[2026-09-25 15:26:23 +0000] [120397] [INFO] Using worker: sync
-[2026-09-25 15:26:23 +0000] [120402] [INFO] Booting worker with pid: 120402
-[2026-09-25 15:26:23 +0000] [120403] [INFO] Booting worker with pid: 120403
-[2026-09-25 15:26:23 +0000] [120404] [INFO] Booting worker with pid: 120404
-[2026-09-25 15:35:59 +0000] [120397] [INFO] Handling signal: hup
-[2026-09-25 15:35:59 +0000] [120397] [INFO] Hang up: Master
-[2026-09-25 15:35:59 +0000] [120397] [ERROR] Worker (pid:120402) was sent SIGHUP!
-[2026-09-25 15:35:59 +0000] [120490] [INFO] Booting worker with pid: 120490
-[2026-09-25 15:35:59 +0000] [120492] [INFO] Booting worker with pid: 120492
-[2026-09-25 15:35:59 +0000] [120493] [INFO] Booting worker with pid: 120493
-[2026-09-25 15:35:59 +0000] [120397] [ERROR] Worker (pid:120403) was sent SIGHUP!
-[2026-09-25 15:35:59 +0000] [120397] [ERROR] Worker (pid:120404) was sent SIGHUP!
+[2026-09-26 10:48:17 +0000] [123253] [INFO] Starting gunicorn 23.0.0
+[2026-09-26 10:48:17 +0000] [123253] [INFO] Listening at: http://127.0.0.1:8000 (123253)
+[2026-09-26 10:48:17 +0000] [123253] [INFO] Using worker: sync
+[2026-09-26 10:48:17 +0000] [123258] [INFO] Booting worker with pid: 123258
+[2026-09-26 10:48:17 +0000] [123259] [INFO] Booting worker with pid: 123259
+[2026-09-26 10:48:17 +0000] [123260] [INFO] Booting worker with pid: 123260
+[2026-09-26 10:53:33 +0000] [123253] [INFO] Handling signal: hup
+[2026-09-26 10:53:33 +0000] [123253] [INFO] Hang up: Master
+[2026-09-26 10:53:33 +0000] [123268] [INFO] Booting worker with pid: 123268
+[2026-09-26 10:53:33 +0000] [123269] [INFO] Booting worker with pid: 123269
+[2026-09-26 10:53:33 +0000] [123270] [INFO] Booting worker with pid: 123270
+[2026-09-26 10:53:33 +0000] [123253] [ERROR] Worker (pid:123258) was sent SIGHUP!
+[2026-09-26 10:53:33 +0000] [123253] [ERROR] Worker (pid:123259) was sent SIGHUP!
+[2026-09-26 10:53:33 +0000] [123253] [ERROR] Worker (pid:123260) was sent SIGHUP!
