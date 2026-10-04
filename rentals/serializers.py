@@ -1,8 +1,13 @@
 from rest_framework import serializers
 from .models import Car, Booking, Payment
+from .availability import available_count
 
 
 class CarSerializer(serializers.ModelSerializer):
+    available_count = serializers.SerializerMethodField()
+
+    def get_available_count(self, car):
+        return available_count(car)
 
     class Meta:
         model = Car

@@ -1,10 +1,13 @@
 from decimal import Decimal
 from unittest import mock
+from datetime import date, timedelta
 
 import stripe
 from django.test import TestCase, override_settings
+from django.utils import timezone
 
 from .models import Car, Booking, Payment
+from .availability import available_count, rental_datetime
 
 
 def _make_car():
@@ -20,7 +23,7 @@ def _make_car():
 def _booking_payload(car, pay_now, total):
     return {
         'car': car.id,
-        'pickup_date': '2030-01-01', 'dropoff_date': '2030-01-03',
+        'pickup_date': '2030-01-01', 'dropoff_date': '2030-01-04',
         'pickup_time': '09:00 AM', 'dropoff_time': '09:00 AM',
         'name': 'Jane', 'phone': '501234567', 'email': 'jane@example.com',
         'baby_seat': False, 'pay_now': pay_now,
@@ -34,22 +37,82 @@ class CreateCheckoutSessionTests(TestCase):
     def setUp(self):
         self.car = _make_car()
 
-    def test_pay_later_creates_booking_without_stripe(self):
-        resp = self.client.post(
-            '/api/bookings/', _booking_payload(self.car, False, '0'),
-            content_type='application/json',
-        )
+    @override_settings(STRIPE_SECRET_KEY='sk_test_x')
+    def test_three_vehicles_allow_three_checkouts_and_block_fourth(self):
+        self.car.fleet_count = 3
+        self.car.save()
+        query = '?pickup_date=2030-01-01&dropoff_date=2030-01-04&pickup_time=09%3A00%20AM&dropoff_time=09%3A00%20AM'
+        with mock.patch('stripe.checkout.Session.create') as checkout:
+            for index in range(3):
+                checkout.return_value = mock.Mock(id=f'cs_capacity_{index}', url='https://stripe.test/checkout')
+                self.assertEqual(self.client.get(f'/api/cars/{self.car.id}/{query}').json()['available_count'], 3 - index)
+                response = self.client.post('/api/bookings/', _booking_payload(self.car, True, '224.44'), content_type='application/json')
+                self.assertEqual(response.status_code, 201)
+            response = self.client.post('/api/bookings/', _booking_payload(self.car, True, '224.44'), content_type='application/json')
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(checkout.call_count, 3)
+        self.assertEqual(self.client.get(f'/api/cars/{self.car.id}/{query}').json()['available_count'], 0)
+        Booking.objects.filter(pk=Booking.objects.first().pk).update(payment_status='failed')
+        self.assertEqual(self.client.get(f'/api/cars/{self.car.id}/{query}').json()['available_count'], 1)
+
+    def test_availability_uses_peak_occupancy_not_total_overlaps(self):
+        self.car.fleet_count = 2
+        self.car.save()
+        for start, end in [(1, 2), (2, 3)]:
+            Booking.objects.create(car=self.car, pickup_date=date(2030, 1, start), dropoff_date=date(2030, 1, end),
+                                   pickup_time='09:00 AM', dropoff_time='09:00 AM', name='Jane', phone='501234567',
+                                   email='jane@example.com', total_price='74.82', status='confirmed')
+        self.assertEqual(available_count(self.car, rental_datetime(date(2030, 1, 1), '09:00 AM'), rental_datetime(date(2030, 1, 3), '09:00 AM')), 1)
+        self.assertEqual(available_count(self.car, rental_datetime(date(2030, 1, 3), '09:00 AM'), rental_datetime(date(2030, 1, 4), '09:00 AM')), 2)
+
+    def test_old_pending_checkout_does_not_reserve_inventory(self):
+        booking = Booking.objects.create(car=self.car, pickup_date=date(2030, 1, 1), dropoff_date=date(2030, 1, 4),
+                                         pickup_time='09:00 AM', dropoff_time='09:00 AM', name='Jane', phone='501234567',
+                                         email='jane@example.com', total_price='224.44', status='pending')
+        Booking.objects.filter(pk=booking.pk).update(created_at=timezone.now() - timedelta(minutes=31))
+        self.assertEqual(available_count(self.car, rental_datetime(date(2030, 1, 1), '09:00 AM'), rental_datetime(date(2030, 1, 4), '09:00 AM')), 1)
+
+    def test_pay_later_is_rejected(self):
+        resp = self.client.post('/api/bookings/', _booking_payload(self.car, False, '224.44'), content_type='application/json')
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(Booking.objects.count(), 0)
+
+    @override_settings(STRIPE_SECRET_KEY='sk_test_x')
+    def test_invalid_fields_do_not_start_payment(self):
+        for field, value in [('name', ' '), ('phone', '123'), ('email', 'invalid'),
+                             ('pickup_date', '2020-01-01'), ('dropoff_date', '2030-01-01'),
+                             ('pickup_time', 'invalid'), ('dropoff_time', '')]:
+            with self.subTest(field=field), mock.patch('stripe.checkout.Session.create') as checkout:
+                payload = _booking_payload(self.car, True, '224.44')
+                payload[field] = value
+                resp = self.client.post('/api/bookings/', payload, content_type='application/json')
+                self.assertEqual(resp.status_code, 400)
+                checkout.assert_not_called()
+                self.assertEqual(Booking.objects.count(), 0)
+
+    @override_settings(STRIPE_SECRET_KEY='sk_test_x')
+    def test_one_day_booking_is_allowed(self):
+        payload = _booking_payload(self.car, True, '74.82')
+        payload['dropoff_date'] = '2030-01-02'
+        with mock.patch('stripe.checkout.Session.create', return_value=mock.Mock(id='cs_one_day', url='https://stripe.test/one-day')) as checkout:
+            resp = self.client.post('/api/bookings/', payload, content_type='application/json')
         self.assertEqual(resp.status_code, 201)
-        self.assertNotIn('checkout_url', resp.json())
-        self.assertEqual(Booking.objects.count(), 1)
-        self.assertEqual(Booking.objects.first().status, 'pending')
-        # Server computes total_price: 150.00/day × 2 days
-        self.assertEqual(Booking.objects.first().total_price, Decimal('300.00'))
+        self.assertEqual(Booking.objects.get().total_price, Decimal('74.82'))
+        self.assertEqual(checkout.call_args.kwargs['line_items'][0]['price_data']['unit_amount'], 7482)
+
+    @override_settings(STRIPE_SECRET_KEY='sk_test_x')
+    def test_payment_must_equal_half(self):
+        for amount in ['224.43', '224.45', '448.88']:
+            with self.subTest(amount=amount), mock.patch('stripe.checkout.Session.create') as checkout:
+                resp = self.client.post('/api/bookings/', _booking_payload(self.car, True, amount), content_type='application/json')
+                self.assertEqual(resp.status_code, 400)
+                checkout.assert_not_called()
+                self.assertEqual(Booking.objects.count(), 0)
 
     @override_settings(STRIPE_SECRET_KEY='')
     def test_pay_now_without_secret_returns_503_and_deletes_booking(self):
         resp = self.client.post(
-            '/api/bookings/', _booking_payload(self.car, True, '50.00'),
+            '/api/bookings/', _booking_payload(self.car, True, '224.44'),
             content_type='application/json',
         )
         self.assertEqual(resp.status_code, 503)
@@ -69,15 +132,15 @@ class CreateCheckoutSessionTests(TestCase):
         fake = mock.Mock(id='cs_test_session_123', url='https://stripe.test/session/123')
         with mock.patch('stripe.checkout.Session.create', return_value=fake) as m:
             resp = self.client.post(
-                '/api/bookings/', _booking_payload(self.car, True, '50.00'),
+                '/api/bookings/', _booking_payload(self.car, True, '224.44'),
                 content_type='application/json',
             )
         self.assertEqual(resp.status_code, 201)
         self.assertEqual(resp.json()['checkout_url'], 'https://stripe.test/session/123')
 
-        # Client-sent amount used directly (50.00 AED).
+        # Half of the server-calculated discounted, VAT-inclusive three-day total.
         booking = Booking.objects.first()
-        self.assertEqual(booking.total_price, Decimal('50.00'))
+        self.assertEqual(booking.total_price, Decimal('224.44'))
 
         payment = Payment.objects.first()
 
@@ -85,7 +148,7 @@ class CreateCheckoutSessionTests(TestCase):
         _, kwargs = m.call_args
         self.assertEqual(kwargs['mode'], 'payment')
         self.assertEqual(kwargs['line_items'][0]['price_data']['currency'], 'aed')
-        self.assertEqual(kwargs['line_items'][0]['price_data']['unit_amount'], 5000)
+        self.assertEqual(kwargs['line_items'][0]['price_data']['unit_amount'], 22444)
         self.assertEqual(kwargs['metadata'], {
             'booking_id': str(booking.id),
             'payment_id': str(payment.id),
@@ -100,7 +163,7 @@ class CreateCheckoutSessionTests(TestCase):
         with mock.patch('stripe.checkout.Session.create',
                         side_effect=stripe.error.AuthenticationError('bad key')):
             resp = self.client.post(
-                '/api/bookings/', _booking_payload(self.car, True, '50.00'),
+                '/api/bookings/', _booking_payload(self.car, True, '224.44'),
                 content_type='application/json',
             )
         self.assertEqual(resp.status_code, 502)

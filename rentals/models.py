@@ -24,6 +24,7 @@ class Car(models.Model):
     ]
 
     brand = models.CharField(max_length=100)
+    fleet_count = models.PositiveIntegerField(default=1, help_text='Number of vehicles available for this model.')
     name = models.CharField(max_length=100)
 
     category = models.CharField(

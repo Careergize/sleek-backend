@@ -1,9 +1,12 @@
 import logging
+import re
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP
 
 import pdfkit
 import stripe
 from django.conf import settings
+from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
@@ -13,6 +16,7 @@ from rest_framework import status
 
 from .models import Car, Booking, Payment
 from .serializers import CarSerializer, BookingSerializer
+from .availability import available_count, CHECKOUT_HOLD_MINUTES
 
 logger = logging.getLogger(__name__)
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -41,8 +45,13 @@ TWO_PLACES = Decimal('0.01')
 BABY_SEAT_RATE_PER_DAY = Decimal('25')
 
 
-def _compute_full_total(car, pickup_date, dropoff_date, baby_seat, pay_now):
-    days = (dropoff_date - pickup_date).days or 1
+def _compute_full_total(car, pickup_date, dropoff_date, baby_seat, pay_now, pickup_time=None, dropoff_time=None):
+    if pickup_time and dropoff_time:
+        duration = _rental_datetime(dropoff_date, dropoff_time) - _rental_datetime(pickup_date, pickup_time)
+        days = (duration.total_seconds() + 86399) // 86400
+        days = int(days)
+    else:
+        days = (dropoff_date - pickup_date).days or 1
     base_price = car.price_day * days
     if baby_seat:
         base_price += BABY_SEAT_RATE_PER_DAY * days
@@ -51,6 +60,11 @@ def _compute_full_total(car, pickup_date, dropoff_date, baby_seat, pay_now):
     vat = (base_price - discount) * Decimal('0.05')
     total = base_price - discount + vat
     return total.quantize(TWO_PLACES, rounding=ROUND_HALF_UP)
+
+
+def _rental_datetime(date, time):
+    parsed = datetime.strptime(time, '%I:%M %p').time()
+    return datetime.combine(date, parsed, tzinfo=timezone(timedelta(hours=4)))
 
 
 # =========================
@@ -161,8 +175,18 @@ class CarDetailAPIView(APIView):
             )
 
         serializer = CarSerializer(car)
+        data = dict(serializer.data)
+        if request.query_params.get('pickup_date') or request.query_params.get('dropoff_date'):
+            try:
+                start = _rental_datetime(datetime.strptime(request.query_params['pickup_date'], '%Y-%m-%d').date(), request.query_params['pickup_time'])
+                end = _rental_datetime(datetime.strptime(request.query_params['dropoff_date'], '%Y-%m-%d').date(), request.query_params['dropoff_time'])
+                if end <= start:
+                    raise ValueError('Drop-off must follow pickup.')
+            except (ValueError, KeyError):
+                return Response({'detail': 'Provide valid pickup and drop-off dates and times.'}, status=400)
+            data['available_count'] = available_count(car, start, end)
 
-        return Response(serializer.data)
+        return Response(data)
 
     def put(self, request, pk):
 
@@ -252,6 +276,7 @@ class BookingListCreateAPIView(APIView):
 
         return Response(serializer.data)
 
+    @transaction.atomic
     def post(self, request):
 
         serializer = BookingSerializer(data=request.data)
@@ -265,18 +290,37 @@ class BookingListCreateAPIView(APIView):
         dropoff = serializer.validated_data['dropoff_date']
         baby_seat = serializer.validated_data.get('baby_seat', False)
 
+        errors = {}
+        if pay_now is not True:
+            errors['pay_now'] = ['Online payment of 50% is required.']
+        try:
+            pickup_at = _rental_datetime(pickup, serializer.validated_data['pickup_time'])
+            dropoff_at = _rental_datetime(dropoff, serializer.validated_data['dropoff_time'])
+            if pickup_at <= datetime.now(timezone.utc):
+                errors['pickup_date'] = ['Pickup must be in the future (Dubai time).']
+            if dropoff_at - pickup_at < timedelta(hours=24):
+                errors['dropoff_date'] = ['The minimum rental period is 1 day (24 hours).']
+        except (ValueError, KeyError):
+            errors['pickup_time'] = ['Select valid pickup and drop-off times, for example 09:00 AM.']
+        name = serializer.validated_data.get('name', '').strip()
+        if len(name) < 2:
+            errors['name'] = ['Enter your full name (at least 2 characters).']
+        phone = re.sub(r'[\s-]', '', serializer.validated_data.get('phone', ''))
+        if not re.fullmatch(r'(?:\+971|0)?5\d{8}', phone):
+            errors['phone'] = ['Enter a valid UAE mobile number.']
+        if errors:
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        # Serialise capacity checks for this model so concurrent checkouts cannot oversell.
+        car = Car.objects.select_for_update().get(pk=car.pk)
+        if available_count(car, pickup_at, dropoff_at) == 0:
+            return Response({'detail': 'This model is fully booked for your selected dates. Please choose different dates or another vehicle.'}, status=409)
+        serializer.validated_data['name'] = name
+        serializer.validated_data['phone'] = '+971' + phone.removeprefix('+971').removeprefix('0')
+
         # Always recompute the real total server-side. Never trust total_price
         # from the client as the "full" amount owed.
-        full_total = _compute_full_total(car, pickup, dropoff, baby_seat, pay_now)
-
-        if not pay_now:
-            # Pay Later: no online payment, the full amount is due on pickup.
-            # Booking is confirmed immediately and the frontend triggers the
-            # confirmation email right after this call succeeds.
-            serializer.validated_data['total_price'] = full_total
-            booking = serializer.save(status='confirmed')
-
-            return Response(BookingSerializer(booking).data, status=status.HTTP_201_CREATED)
+        full_total = _compute_full_total(car, pickup, dropoff, baby_seat, True,
+                                       serializer.validated_data['pickup_time'], serializer.validated_data['dropoff_time'])
 
         # =========================
         # Pay Now
@@ -293,11 +337,11 @@ class BookingListCreateAPIView(APIView):
         prebook_amount = serializer.validated_data.get('total_price')
         min_prebook = (full_total / 2).quantize(TWO_PLACES, rounding=ROUND_HALF_UP)
 
-        if prebook_amount is None or prebook_amount < min_prebook:
+        if prebook_amount is None or prebook_amount != min_prebook:
             return Response(
                 {
                     'detail': (
-                        f'Pre-book amount must be at least AED {min_prebook} '
+                        f'Pre-book amount must be exactly AED {min_prebook} '
                         f'(50% of the total AED {full_total}).'
                     )
                 },
@@ -322,6 +366,7 @@ class BookingListCreateAPIView(APIView):
         try:
             session = stripe.checkout.Session.create(
                 mode='payment',
+                expires_at=int((datetime.now(timezone.utc) + timedelta(minutes=CHECKOUT_HOLD_MINUTES)).timestamp()),
                 line_items=[{
                     'quantity': 1,
                     'price_data': {
